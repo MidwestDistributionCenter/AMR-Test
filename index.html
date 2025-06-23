@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AMR Troubleshooting App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+    .container {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 750px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .step {
+      padding: 10px;
+      background: #e8f0fe;
+      border-left: 5px solid #2196F3;
+      margin-top: 10px;
+    }
+    .hidden {
+      display: none;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 1rem;
+    }
+    select, input {
+      padding: 10px;
+      width: 100%;
+      margin-top: 10px;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    details {
+      background: #f0f8ff;
+      padding: 10px;
+      margin-top: 10px;
+      border-left: 4px solid #007acc;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>AMR Fault Troubleshooting</h2>
+
+    <label for="errorInput"><strong>Enter Mission Error Code or Message:</strong></label>
+    <input type="text" id="errorInput" placeholder="E.g., PLANNING_ERROR or no suitable path" />
+    <button onclick="checkError()">Start</button>
+
+    <div id="noMatch" class="step hidden" style="border-left-color: #f44336;">
+  ❌ Fault not recognized. Please check the error or escalate if unsure.
+</div>
+
+    <div id="planningErrorFlow" class="hidden">
+  
+      <div class="step">
+        <strong>Step 1:</strong> Wait for Fleet Manager to auto-resolve (may be blocked by another AMR).
+      </div>
+
+      <div class="step">
+        <strong>Step 2:</strong> Does the AMR still need manual help?
+        <select id="manualStep" onchange="showNextStep()">
+          <option value="">-- Select One --</option>
+          <option value="move">Yes – Move Mission</option>
+          <option value="lift">Yes – Lift Up / Down Mission</option>
+          <option value="no">No – It recovered</option>
+        </select>
+      </div>
+
+      <div id="moveSteps" class="hidden">
+        <div class="step"><strong>Move Mission Troubleshooting:</strong></div>
+        <div class="step">1. Connect with KUKA Studio or manual controller.</div>
+        <div class="step">2. Move AMR back to the path and ensure proper orientation.</div>
+        <div class="step">3. Charging port = back. Move backward when lift is down, forward when raised.</div>
+        <div class="step">4. Switch AMR to Auto Mode. Press flashing Start/Reset buttons.</div>
+        <div class="step">5. If needed, open Map Monitor to align AMR with path.</div>
+      </div>
+
+      <div id="liftSteps" class="hidden">
+        <div class="step"><strong>Lift Up / Down Mission Troubleshooting:</strong></div>
+        <div class="step">1. Connect to AMR.</div>
+        <div class="step">2. Verify localization – reset if needed.</div>
+        <div class="step">3. Move AMR slightly forward into the rack.</div>
+        <div class="step">4. Switch to Auto Mode – lift should move if close enough to node.</div>
+        <div class="step">5. If still error, recheck localization and reset again.</div>
+
+        <details>
+  <summary>📌 How to Localize an AMR</summary>
+  <ol>
+    <li>
+      Connect to the AMR via its IP address using KUKA Studio.
+      <br><img src="L1.png" alt="KUKA Studio Connection" width="20%">
+    </li>
+    <li>
+      On the Controller Tab, click <strong>Force DebugMode</strong> to take the AMR offline.
+      <br><img src="L2.png" alt="Force DebugMode" width="35%">
+    </li>
+    <li>
+      Click on the <strong>Navigation</strong> Tab at the top.
+      <br><img src="L3.png" alt="Navigation Tab" width="40%">
+    </li>
+    <li>
+      Choose the <strong>Localization</strong> page on the left.
+      <br><img src="L4.png" alt="Localization Page" width="40%">
+    </li>
+    <li>
+      Click <strong>Refresh Map</strong> and wait for it to load to 100%. Click OK once it completes.
+      <br><img src="L5.png" alt="Refresh Map" width="40%">
+    </li>
+    <li>
+      If an error appears about the missing map file, click <strong>Cancel</strong> to ignore.
+      <br><img src="L6.png" alt="Map Not Found Error" width="40%">
+    </li>
+    <li>
+      Red spots will appear showing the current localization.
+      <br><img src="L7.png" alt="Red Localization Spots" width="40%">
+    </li>
+    <li>
+  Click where the AMR is physically located, drag the black arrow toward the front.
+
+  <div style="margin-top:10px;">
+    <label for="amr-location"><strong>Where are you currently located?</strong></label>
+    <select id="amr-location" onchange="showLocationSteps()" style="padding: 6px; width: 100%; margin-top: 5px;">
+      <option value="">-- Select Location --</option>
+      <option value="edock">E-dock</option>
+      <option value="gso">GSO</option>
+      <option value="mainaisle">Main Aisle</option>
+      <option value="shippingdock">Shipping Dock</option>
+      <option value="intersection">Intersection</option>
+    </select>
+  </div>
+
+  <div id="location-steps" style="margin-top: 15px;"></div>
+
+</li>
+    <li>
+      Use arrows and rotation tools in the top-right to align black spots with the map.
+      <br><img src="L8.png" alt="Align Features" width="100%">
+    </li>
+    <li>
+      Click <strong>Initialize</strong> to send the updated position. Click OK when it hits 100%.
+      <br><img src="L9.png" alt="Initialize Localization" width="100%">
+    </li>
+    <li>
+      Return to the Controller Tab and click <strong>Restore AutoMode</strong>. Confirm in Map Monitor.
+      <br><img src="L10.png" alt="Restore AutoMode" width="100%">
+    </li>
+  </ol>
+</details>
+      </div>
+      <div id="noSteps" class="hidden">
+        <div class="step">✅ AMR recovered on its own. No further action needed.</div>
+    </div>
+    </div>
+      
+      <div id="lockupDropoffFlow" class="hidden">
+      <div class="step"><strong>Step 1:</strong> Using either the manual controller or brake release, move the AMR that is inside of the rack (AMR1) out to an open node on the graph.</div>
+      <div class="step"><strong>Step 2:</strong> Switch AMR1 back into Auto Mode.</div>
+      <div class="step"><strong>Step 3:</strong> Wait a few seconds. Once AMR1 comes online, its position should update in Map Monitor.</div>
+      <div class="step"><strong>Step 4:</strong> AMR2 should now continue with its drop off. AMR1 will begin its next job or move to a park node.</div>
+    </div>
+
+  </div>
+
+ <script>
+function checkError() {
+  const input = document.getElementById("errorInput").value.toLowerCase();
+
+  const isPlanningError = input.includes("planning_error") || input.includes("no suitable path");
+  const isStuckAtNode = input.includes("stuck") || input.includes("stuck_at_node");
+  const isLockupDropoff = input.includes("lockup") || input.includes("dropoff");
+
+  document.getElementById("planningErrorFlow").classList.toggle("hidden", !isPlanningError);
+  document.getElementById("stuckAtNodeFlow")?.classList.toggle("hidden", !isStuckAtNode);
+  document.getElementById("lockupDropoffFlow").classList.toggle("hidden", !isLockupDropoff);
+
+  const noMatch = !(isPlanningError || isStuckAtNode || isLockupDropoff);
+  document.getElementById("noMatch").classList.toggle("hidden", !noMatch);
+
+  if (document.getElementById("manualStep")) {
+    document.getElementById("manualStep").value = "";
+    document.getElementById("moveSteps").classList.add("hidden");
+    document.getElementById("liftSteps").classList.add("hidden");
+    document.getElementById("noSteps").classList.add("hidden");
+  }
+}
+
+function showNextStep() {
+  const value = document.getElementById("manualStep").value;
+  document.getElementById("moveSteps").classList.add("hidden");
+  document.getElementById("liftSteps").classList.add("hidden");
+  document.getElementById("noSteps").classList.add("hidden");
+
+  if (value === "move") {
+    document.getElementById("moveSteps").classList.remove("hidden");
+  } else if (value === "lift") {
+    document.getElementById("liftSteps").classList.remove("hidden");
+  } else if (value === "no") {
+    document.getElementById("noSteps").classList.remove("hidden");
+  }
+}
+</script>
+</body>
+</html>
